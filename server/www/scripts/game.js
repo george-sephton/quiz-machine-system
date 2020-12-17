@@ -96,6 +96,7 @@ function updateClientList(result) {
 		/* Create our new table row */
 		$('<div/>', {
 			id: 'client_row_id_'+client['client_id'],
+			"client_id": client['client_id'],
 			"class": 'gameTableRow',
 		}).appendTo('#clientTableBody');
 
@@ -220,6 +221,14 @@ function update_game_status() {
 	$("#game_status").html(status_HTML);
 }
 
+function update_buzz_status(disabled_state) {
+	$("#clientTableBody").find(".gameTableRow").each(function(index){
+		if($(this).attr("client_id") != 1) {
+			$(this).find(".gameTableCell").find("select, input").prop('disabled', disabled_state);
+		}
+	});
+}
+
 function game_parse_broadcast(received_JSON) {
 
 	switch(received_JSON["message"]) {
@@ -245,6 +254,12 @@ function game_parse_broadcast(received_JSON) {
 				update_round_button();
 				/* Update game status text */
 				update_game_status();
+				/* Update buzz disabled status */
+				update_buzz_status(game_in_progress);
+				/* Reset the row colours to remove any highlighted winners */
+				$("#clientTableBody").find(".gameTableRow").each(function(index){
+					$(this).css("background-color", "");
+				});
 			}
 			break;
 		case "buzz_en_change":
