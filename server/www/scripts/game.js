@@ -222,14 +222,34 @@ function update_game_status() {
 
 function game_parse_broadcast(received_JSON) {
 
-	switch(received_JSON["data"]) {
+	switch(received_JSON["message"]) {
 		case "client_list_change":
 			/* Update our client table */
 			send_socket_request("get_client_list");
 			break;
 		case "game_admin_change":
-			/* Fetch updated game admin data */
-			send_socket_request("get_admin_data");
+			/* Game admin data has changed - store current game data to comapre */
+			var current_game_in_progress = game_in_progress;
+			var current_game_state = game_state;
+
+			var game_data = received_JSON["data"]
+			/* Copy the data into our local variables */
+			game_in_progress = game_data['game_in_progress'];
+			game_state = game_data['game_state'];
+			
+			/* Now see if anything's updated */
+			if((current_game_in_progress != game_in_progress) || (current_game_state != game_state)) {
+				/* Update game start stop button */
+				update_game_button();
+				/* Update round start stop button */
+				update_round_button();
+				/* Update game status text */
+				update_game_status();
+			}
+			break;
+		case "buzz_en_change":
+			/* Buzz enable change - just reload the client list */
+			send_socket_request("get_client_list");
 			break;
 		case "reset":
 			/* Game as just been reset, let's reload the game admin data and client table */
@@ -238,7 +258,7 @@ function game_parse_broadcast(received_JSON) {
 			break;
 		case "buzz_in":
 			/* Someone's buzzed in */
-			winning_row = received_JSON["client_id"];
+			winning_row = received_JSON["data"]["client_id"];
 			$('#client_row_id_'+winning_row).css("background-color", "#e04a4f");
 			send_socket_request("get_admin_data");
 			break;

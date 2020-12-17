@@ -38,12 +38,14 @@ from game_leds import *
 pygame.mixer.init()
 pygame.mixer.music.set_volume(0.5)
 
+# Game variable
+buzzed_in = False
+
 # Websockets handler
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
-	
+
 	ws_connections = set()
 	buttons_handles = [Button(10), Button(27), Button(9), Button(25), Button(8), Button(11), Button(5)]
-	buzzed_in = False
 
 	# Called when new connection opened
 	def open(self):
@@ -75,23 +77,23 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
 	def periodic_winner_check(self):
 
+		global buzzed_in
+
 		game_admin_rows, admin_data = game_mysql_select("SELECT * FROM tbl_game_admin WHERE game_id = 1 LIMIT 1;", None)
 		
 		if game_admin_rows == 1:
-
 			if admin_data[0]["game_state"] == 1:
-				
-				if self.buzzed_in == False:	
-					self.buzzed_in = True
-					
+
+				if buzzed_in == False:
 					# Someone buzzed in, let's find out who
 					game_messages_rows, game_messages = game_mysql_select("SELECT * FROM tbl_messages ORDER BY message_time ASC LIMIT 1;", None)
 					if game_admin_rows == 1:
 
 						winning_client_id = game_messages[0]['message_client_from']
 						# Broadcast the result
-						broadcast_msg = {"request": "broadcast", "data": "buzz_in", "client_id": winning_client_id}
+						broadcast_msg = {"request": "broadcast", "message": "buzz_in", "data": {"client_id": winning_client_id}}
 						self.game_controller_broadcast(self=self, json_message=broadcast_msg)
+						buzzed_in = True
 
 						# Get the winning client info
 						client_rows, client_data = game_mysql_select("SELECT * FROM tbl_clients WHERE client_id = %s LIMIT 1;", (winning_client_id,))
@@ -120,7 +122,6 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 					else:
 						# Error getting the messages
 						print("Error reading messages")
-
 		else:
 			# Couldn't get game admin data
 			print("Error getting game admin data")
@@ -145,13 +146,15 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 			if pin == 10:
 				# Start/Stop Game
 				if game_admin_data[0]['game_in_progress'] == 0:
-					update_value_json = {"request": "set_game_in_progress", "data": {"set_value": 1}}
+					set_game_in_progress = 1
 				else:
-					update_value_json = {"request": "set_game_in_progress", "data": {"set_value": 0}}
+					set_game_in_progress = 0
+				
+				update_value_json = {"request": "set_game_in_progress", "data": {"set_value": set_game_in_progress}}
 
 				self.game_controller_parse_request(self, update_value_json, False);
 				# Broadcast
-				broadcast_msg = {"request": "broadcast", "data": "game_admin_change"}
+				broadcast_msg = {"request": "broadcast", "message": "game_admin_change", "data": {"game_in_progress": set_game_in_progress, "game_state": 0}}
 				self.game_controller_broadcast(self=self, json_message=broadcast_msg)
 
 			elif pin == 27:
@@ -160,7 +163,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 					update_value_json = {"request": "set_game_state", "data": {"set_value": 0}}
 					self.game_controller_parse_request(self, update_value_json, False);
 					# Broadcast
-					broadcast_msg = {"request": "broadcast", "data": "game_admin_change"}
+					broadcast_msg = {"request": "broadcast", "message": "game_admin_change", "data": {"game_in_progress": 1, "game_state": 0}}
 					self.game_controller_broadcast(self=self, json_message=broadcast_msg)
 
 			else:
@@ -195,7 +198,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 							update_value_json = {"request": "set_buzz_en", "data": {"buzz_en": set_buzz_en, "client_id": button_client_id}}
 							self.game_controller_parse_request(self, update_value_json, False);
 							# Broadcast
-							broadcast_msg = {"request": "broadcast", "data": "client_list_change"}
+							broadcast_msg = {"request": "broadcast", "message": "buzz_en_change", "data": {"client_id": button_client_id, "buzz_en_state": set_buzz_en}}
 							self.game_controller_broadcast(self=self, json_message=broadcast_msg)
 						
 						else:
@@ -206,6 +209,8 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
 	# Parse incoming request
 	def game_controller_parse_request(self, input_json, broadcast_en = True):
+
+		global buzzed_in
 
 		# Create the return JSON - default status value is 5 (Bad request)	
 		json_data = '{"request":"","status":"5","result":""}'
@@ -248,7 +253,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 							
 							# Update successful, broadcast that the client info has changed
 							if broadcast_en:
-								broadcast_msg = {"request": "broadcast", "data": "client_list_change"}
+								broadcast_msg = {"request": "broadcast", "message": "client_list_change"}
 								self.game_controller_broadcast(broadcast_msg)
 
 							json_object["status"] = "0"
@@ -302,7 +307,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 										if no_clients2 == 1:
 											# Everything went well, broadcast that a new client has joined
 											if broadcast_en:
-												broadcast_msg = {"request": "broadcast", "data": "client_list_change"}
+												broadcast_msg = {"request": "broadcast", "message": "client_list_change"}
 												self.game_controller_broadcast(broadcast_msg)
 											# Update LEDs
 											load_led_colours()
@@ -332,7 +337,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 								
 								# Update successful, broadcast that the client info has changed
 								if broadcast_en:
-									broadcast_msg = {"request": "broadcast", "data": "client_list_change"}
+									broadcast_msg = {"request": "broadcast", "message": "client_list_change"}
 									self.game_controller_broadcast(broadcast_msg)
 
 								json_object["result"] = str(client_list[0]['client_id'])
@@ -432,7 +437,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 			######### SET GAME IN PROGRESS #########
 			elif request == "set_game_in_progress":
 				
-				self.buzzed_in = False
+				buzzed_in = False
 				# Get the required variable
 				try: data["set_value"]
 				except KeyError: data["set_value"] = None
@@ -447,7 +452,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
 							# Everything went well, broadcast that the game status has changed
 							if broadcast_en:
-								broadcast_msg = {"request": "broadcast", "data": "game_admin_change"}
+								broadcast_msg = {"request": "broadcast", "message": "game_admin_change", "data": {"game_in_progress": data["set_value"], "game_state": 0}}
 								self.game_controller_broadcast(broadcast_msg)
 							# Update LEDs
 							load_led_colours()
@@ -466,7 +471,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 			######### SET GAME STATE #########
 			elif request == "set_game_state":
 				
-				self.buzzed_in = False
+				buzzed_in = False
 				# Get the required variable
 				try: data["set_value"]
 				except KeyError: data["set_value"] = None
@@ -480,7 +485,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 						if game_mysql_update("UPDATE tbl_game_admin SET game_state = %s WHERE game_id = 1;", (str(data["set_value"]),)):
 							# Everything went well, broadcast that the game status has changed
 							if broadcast_en:
-								broadcast_msg = {"request": "broadcast", "data": "game_admin_change"}
+								broadcast_msg = {"request": "broadcast", "message": "game_admin_change", "data": {"game_in_progress": 1, "game_state": data["set_value"]}}
 								self.game_controller_broadcast(broadcast_msg)
 							# Update LEDs
 							load_led_colours()
@@ -509,7 +514,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 						if game_mysql_update("UPDATE tbl_game_admin SET game_in_progress = '0', game_state = '0' WHERE game_id = 1;", None):
 							# Everything should have been reset correctly, broadcast reset signal
 							if broadcast_en:
-								broadcast_msg = {"request": "broadcast", "data": "reset"}
+								broadcast_msg = {"request": "broadcast", "message": "reset"}
 								self.game_controller_broadcast(broadcast_msg)
 							# Update LEDs
 							load_led_colours()
@@ -544,7 +549,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 						if game_mysql_update("UPDATE tbl_clients SET client_buzz_allowed = %s WHERE client_id = %s;", (str(data["buzz_en"]), str(data["client_id"]))):
 							# Everything went well, broadcast that the client list has changed
 							if broadcast_en:
-								broadcast_msg = {"request": "broadcast", "data": "client_list_change"}
+								broadcast_msg = {"request": "broadcast", "message": "buzz_en_change", "data": {"client_id": data["client_id"], "buzz_en_state": data["buzz_en"]}}
 								self.game_controller_broadcast(broadcast_msg)
 							# Update LEDs
 							load_led_colours()
@@ -581,7 +586,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 						if game_mysql_update("UPDATE tbl_clients SET client_sound = %s WHERE client_id = %s;", (str(data["buzz_sound"]), str(data["client_id"]))):
 							# Everything went well, broadcast that the client list has changed
 							if broadcast_en:
-								broadcast_msg = {"request": "broadcast", "data": "client_list_change"}
+								broadcast_msg = {"request": "broadcast", "message": "client_list_change"}
 								self.game_controller_broadcast(broadcast_msg)
 							json_object["status"] = "0"
 						else:
