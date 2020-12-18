@@ -224,7 +224,11 @@ function update_game_status() {
 function update_buzz_status(disabled_state) {
 	$("#clientTableBody").find(".gameTableRow").each(function(index){
 		if($(this).attr("client_id") != 1) {
-			$(this).find(".gameTableCell").find("select, input").prop('disabled', disabled_state);
+			if(disabled_state == 1) {
+				$(this).find(".gameTableCell").find("select, input").prop('disabled', 'disabled');
+			} else {
+				$(this).find(".gameTableCell").find("select, input").prop('disabled', '');
+			}
 		}
 	});
 }
