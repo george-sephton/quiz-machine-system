@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 17, 2020 at 11:03 AM
+-- Generation Time: Dec 18, 2020 at 09:39 PM
 -- Server version: 10.3.25-MariaDB-0+deb10u1
 -- PHP Version: 7.3.19-1~deb10u1
 
@@ -75,6 +75,18 @@ CREATE TABLE `tbl_messages` (
   `message_short` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tbl_players`
+--
+
+CREATE TABLE `tbl_players` (
+  `client_id` int(11) NOT NULL,
+  `player_name` varchar(255) DEFAULT NULL,
+  `player_score` int(11) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 --
 -- Indexes for dumped tables
 --
@@ -96,6 +108,12 @@ ALTER TABLE `tbl_game_admin`
 --
 ALTER TABLE `tbl_messages`
   ADD PRIMARY KEY (`message_id`);
+
+--
+-- Indexes for table `tbl_players`
+--
+ALTER TABLE `tbl_players`
+  ADD PRIMARY KEY (`client_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables

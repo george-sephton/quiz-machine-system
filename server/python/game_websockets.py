@@ -298,25 +298,30 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 								if game_admin_data[0]['game_in_progress'] == 0:
 
 									# Game not started, let's register the client
-									inserted_row_id = game_mysql_insert("INSERT INTO tbl_clients (client_id, client_colour, client_buzz_allowed, client_sound, client_charge) VALUES (NULL, %s, '1', '1', %s);", ( data["client_colour"], str(data["battery_charge"]) ))
-									if inserted_row_id != False:
+									inserted_client_row_id = game_mysql_insert("INSERT INTO tbl_clients (client_id, client_colour, client_buzz_allowed, client_sound, client_charge) VALUES (NULL, %s, '1', '1', %s);", ( data["client_colour"], str(data["battery_charge"]) ))
+									if inserted_client_row_id != False:
 
-										# Insert successful, Get new client ID
-										no_clients2, client_list2 = game_mysql_select("SELECT * FROM tbl_clients WHERE client_id = %s LIMIT 1;", (str(inserted_row_id),))
+										if game_mysql_update("INSERT INTO tbl_players (client_id) VALUES (%s);", (str(inserted_client_row_id),)):
 
-										if no_clients2 == 1:
-											# Everything went well, broadcast that a new client has joined
-											if broadcast_en:
-												broadcast_msg = {"request": "broadcast", "message": "client_list_change"}
-												self.game_controller_broadcast(broadcast_msg)
-											# Update LEDs
-											load_led_colours()
-											# Return status 0 along with new client id
-											json_object["result"] = str(client_list2[0]['client_id'])
-											json_object["status"] = "0"
-										
-										else: 
-											# Error retrieving registered ID
+											# Insert successful, Get new client ID
+											no_clients2, client_list2 = game_mysql_select("SELECT * FROM tbl_clients WHERE client_id = %s LIMIT 1;", (str(inserted_client_row_id),))
+
+											if no_clients2 == 1:
+												# Everything went well, broadcast that a new client has joined
+												if broadcast_en:
+													broadcast_msg = {"request": "broadcast", "message": "client_list_change"}
+													self.game_controller_broadcast(broadcast_msg)
+												# Update LEDs
+												load_led_colours()
+												# Return status 0 along with new client id
+												json_object["result"] = str(client_list2[0]['client_id'])
+												json_object["status"] = "0"
+											
+											else: 
+												# Error retrieving registered ID
+												json_object["status"] = "2"
+										else:
+											# Error registering player
 											json_object["status"] = "2"
 
 									else:
@@ -506,7 +511,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 			elif request == "reset_game":
 
 				# First reset the client list and messages table
-				if game_mysql_multi_update("TRUNCATE TABLE tbl_clients; TRUNCATE TABLE tbl_messages; ALTER TABLE tbl_clients AUTO_INCREMENT = 1; ALTER TABLE tbl_messages AUTO_INCREMENT = 1;", None):
+				if game_mysql_multi_update("TRUNCATE TABLE tbl_clients; TRUNCATE TABLE tbl_players; TRUNCATE TABLE tbl_messages; ALTER TABLE tbl_clients AUTO_INCREMENT = 1; ALTER TABLE tbl_messages AUTO_INCREMENT = 1;", None):
 					# Add the controller to the clients table
 					reset_row_count = game_mysql_insert("INSERT INTO tbl_clients (client_id) VALUES (NULL);", None)
 					if reset_row_count == 1:
