@@ -1,0 +1,92 @@
+body {
+	background-color: #333;
+	color: #fff;
+	font-family: "Roboto";
+	padding: 10px;
+}
+#game_admin {
+	margin-bottom: 20px;
+}
+#game_admin #game_status {
+	color: #ccc;
+	font-size: 26px;
+	padding: 0px 0px 10px 0px;
+	margin-bottom: 10px;
+}
+#game_admin a{
+	background: #dd781f;
+	padding: 8px;
+	color: #ccc;
+	font-size: 19px;
+	text-decoration: none;
+	border: 0px;
+}
+#game_admin a:hover{
+	background: #e09c60;
+	color: #666;
+}
+#game_admin a.reset_button {
+	background: #964d0d;
+	color: #fff;
+}
+#game_admin a.reset_button:hover {
+	background: #e09c60;
+	color: #666;
+}
+#game_admin a.state_button_disabled {
+	background: #999;
+}
+#game_admin a.state_button_disabled:hover {
+	color: #ccc;
+}
+#game_admin #game_controls {
+	padding: 8px 0px 8px 0px;
+}
+#game_admin #game_controls .game_control {
+	float: left;
+	margin-right: 16px;
+}
+#clientTable {
+	width: 730px;
+}
+#clientTable #clientTableBody .gameTableCell img{
+	width: 15px;
+	height: 15px;
+	margin-top: 4px;
+}
+#soundsTable #soundsTableBody .gameTableCell {
+	padding-bottom: 3px;
+}
+.gameTable {
+	border: 0px;
+	text-align: left;
+	display: table;
+	margin-bottom: 20px;
+}
+.gameTable .gameTableHeading {
+	display: table-header-group;
+}
+.gameTable .gameTableHeading .gameTableHead {
+	font-weight: normal;
+	text-align: left;
+	padding: 4px;
+	display: table-cell;
+	background: #dd781f;
+}
+.gameTable .gameTableBody {
+	display: table-row-group;
+}
+.gameTable .gameTableRow {
+	display: table-row;
+	background: #666;
+}
+.gameTable .gameTableRow:nth-child(even) {
+	background: #e09c60;
+}
+.gameTable .gameTableCell {
+	padding: 4px;
+	display: table-cell;
+}
+.clear_float {
+	clear: both;
+}
