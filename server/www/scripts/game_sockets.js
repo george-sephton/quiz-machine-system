@@ -25,6 +25,10 @@ game_websockets.onmessage = function(event) {
 				console.log(received_JSON);
 			}
 			break;
+		case "update_player_name":
+			if(received_JSON["status"] != "0") {
+				$("#game_status").html("<span style=\"font-style: italic; color: #f00\">Error setting player name</span>");
+			}
 		case "get_admin_data":
 			if(received_JSON["status"] == "0") {
 				/* Store current game data to comapre */

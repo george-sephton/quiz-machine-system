@@ -56,20 +56,32 @@ function getBuzzSoundsSelect(client_id, client_sound) {
 	return returnHTML;
 }
 
+function translated_client_colour(colour) {
+	switch (colour) {
+		case 'r': return "red"; break;
+		case 'b': return "blue"; break;
+		case 'g': return "green"; break;
+		case 'y': return "yellow"; break;
+		case 'w': return "white"; break;
+	}
+}
+
 function updateClientList(result) {
 	/* Clear current client table */ 
 	$("#clientTableBody").html("");
 	/* Loop through each client in the database and add to the table */
 	$.each(result, function(i, client){
 		/* Get colour of client */
-		var client_colour = "<em>Controller</em>";
-		switch (client['client_colour']) {
-			case 'r': client_colour = "Red"; break;
-			case 'b': client_colour = "Blue"; break;
-			case 'g': client_colour = "Green"; break;
-			case 'y': client_colour = "Yellow"; break;
-			case 'w': client_colour = "White"; break;
+		var client_colour = translated_client_colour(client['client_colour']);
+		if(client['client_id'] != 1) {
+			if(client['player_name'] != null)
+				var player_name = "<span style=\"color: "+client_colour+"\">"+client['player_name']+"</span>";
+			else 
+				var player_name = "<span style=\"color: "+client_colour+"; text-transform:capitalize;\">"+client_colour+"</span>";
+		} else {
+			var player_name = "<em>Controller</em>";
 		}
+
 		/* Get buzz enabled status */
 		var checked = "";
 		if(client['client_buzz_allowed'] == 1) {
@@ -106,11 +118,12 @@ function updateClientList(result) {
 			"style": 'width: 50px; border-right: 1px solid #333;',
 			text: client['client_id']
 		}).appendTo('#client_row_id_'+client['client_id']);
-		/* Client colour */
+		/* Player name */
 		$('<div/>', {
 			"class": 'gameTableCell',
 			"style": 'width: 230px; border-right: 1px solid #333;',
-			html: client_colour
+			id: 'player_name_'+client['client_id'],
+			html: player_name
 		}).appendTo('#client_row_id_'+client['client_id']);
 		/* Buzz enabled checkedbox */
 		$('<div/>', {
@@ -143,6 +156,35 @@ function updateClientList(result) {
 			}
 		}).appendTo('#client_row_id_'+client['client_id']);
 
+		/* Add event listener for "Player Name" - remove any previous listeners first */
+		if(client['client_id'] != 1) {
+			$("#player_name_"+client['client_id']).off();
+			$("#player_name_"+client['client_id']).dblclick(function() {
+				
+				var name_update_show = "";
+				if(client['player_name'] != null) name_update_show = client['player_name'];
+				
+				$(this).html("<input id=\"player_name_update_"+client['client_id']+"\" class=\"player_name_update\" placeholder=\""+name_update_show+"\" />");
+				$("#player_name_update_"+client['client_id']).focus();
+				
+				/* Add event listener for "Player Name Update" - remove any previous listeners first */
+				$("#player_name_update_"+client['client_id']).bind('blur keyup',function(e) {  
+	          		if (e.type === 'blur' || e.keyCode === 13) {
+						var update_name = $("#player_name_update_"+client['client_id']).val();
+
+						if(update_name != "") {
+							var updated_player_name = "<span style=\"color: "+translated_client_colour(client['client_colour'])+";\">"+update_name+"</span>";
+							$("#player_name_"+client['client_id']).html(updated_player_name);
+						} else {
+							$("#player_name_"+client['client_id']).html(player_name);
+						}
+
+						send_socket_request("update_player_name", {"name":update_name, "client_id":client['client_id']});
+					}
+				});
+				
+			});
+		}
 		/* Add event listener for "Buzz Enabled" - remove any previous listeners first */
 		$("#enable_buzz_"+client['client_id']).off(); 
 		$("#enable_buzz_"+client['client_id']).on("change", function() {

@@ -391,11 +391,23 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 			######### GET CLIENT LIST #########
 			elif request == "get_client_list":
 				
+				return_clients = []
 				# Returns the list of clients
 				no_clients, client_list = game_mysql_select("SELECT * FROM tbl_clients;", None)
 				if no_clients >= 0:
+
+					for client in client_list:
+
+						no_players, player_list = game_mysql_select("SELECT player_name, player_score FROM tbl_players WHERE client_id = %s;", (str(client["client_id"]),))
+						if no_players >= 0:
+
+							add_client = client
+							add_client.update(player_list[0])
+							return_clients.append(add_client)
+
 					json_object["status"] = "0"
-					json_object["result"] = client_list
+					json_object["result"] = return_clients
+					
 				else:
 					# Couldn't get client list
 					json_object["status"] = "2"
@@ -507,6 +519,42 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 					# Variables Error
 					json_object["status"] = "3"
 
+			######### SET PLAYER NAME #########
+			elif request == "update_player_name":
+				# Get the required variable
+				try: data["name"]
+				except KeyError: data["name"] = None
+
+				try: data["client_id"]
+				except KeyError: data["client_id"] = None
+
+				# Check if variables are provided
+				if data["name"] != None and data["client_id"] != None:
+
+					# Check if variables provided are correct
+					if data["client_id"] > 0 and data["client_id"] < 10:
+
+						# Update table with new game state value
+						if game_mysql_update("UPDATE tbl_players SET player_name = %s WHERE client_id = %s;", (str(data["name"]), str(data["client_id"]))):
+							# Everything went well, broadcast that the client list has changed
+							if broadcast_en:
+								broadcast_msg = {"request": "broadcast", "message": "player_name_change", "data": {"client_id": data["client_id"], "player_name": data["name"]}}
+								self.game_controller_broadcast(broadcast_msg)
+							json_object["status"] = "0"
+						else:
+							# Couldn't update client data
+							json_object["status"] = "2"
+
+					else:
+						# Variables Error
+						json_object["status"] = "3"
+
+				else:
+					# Missing Variables
+					json_object["status"] = "3"
+
+
+
 			######### RESET GAME #########
 			elif request == "reset_game":
 
@@ -515,17 +563,24 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 					# Add the controller to the clients table
 					reset_row_count = game_mysql_insert("INSERT INTO tbl_clients (client_id) VALUES (NULL);", None)
 					if reset_row_count == 1:
-						# Client list reset, now update game admin table
-						if game_mysql_update("UPDATE tbl_game_admin SET game_in_progress = '0', game_state = '0' WHERE game_id = 1;", None):
-							# Everything should have been reset correctly, broadcast reset signal
-							if broadcast_en:
-								broadcast_msg = {"request": "broadcast", "message": "reset"}
-								self.game_controller_broadcast(broadcast_msg)
-							# Update LEDs
-							load_led_colours()
-							json_object["status"] = "0"
+
+						# Add the controller to the clients table
+						if game_mysql_update("INSERT INTO tbl_players (client_id) VALUES (1);", None):
+						
+							# Client list reset, now update game admin table
+							if game_mysql_update("UPDATE tbl_game_admin SET game_in_progress = '0', game_state = '0' WHERE game_id = 1;", None):
+								# Everything should have been reset correctly, broadcast reset signal
+								if broadcast_en:
+									broadcast_msg = {"request": "broadcast", "message": "reset"}
+									self.game_controller_broadcast(broadcast_msg)
+								# Update LEDs
+								load_led_colours()
+								json_object["status"] = "0"
+							else:
+								# Something went wrong when resetting the game admin table
+								json_object["status"] = "2"
 						else:
-							# Something went wrong when resetting the game admin table
+							# Something went wrong when resetting the client list
 							json_object["status"] = "2"
 					else:
 						# Something went wrong when resetting the client list
