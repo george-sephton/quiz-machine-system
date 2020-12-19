@@ -605,6 +605,22 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 					# Missing Variables
 					json_object["status"] = "3"
 
+			######### BROADCAST GAMBLE ID #########
+			elif request == "broadcast_gamble_id":
+
+				try: data["gamble_id"]
+				except KeyError: data["gamble_id"] = None
+
+				if data["gamble_id"] != None:
+					
+					if broadcast_en:
+						broadcast_msg = {"request": "broadcast", "message": "gamble_id", "data":data["gamble_id"] }
+						self.game_controller_broadcast(broadcast_msg)
+					json_object["status"] = "0"
+
+				else:
+					# Missing Variables
+					json_object["status"] = "3"
 
 
 				
@@ -667,6 +683,50 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 							# Update LEDs
 							load_led_colours()
 							json_object["status"] = "0"
+						else:
+							# Couldn't update client data
+							json_object["status"] = "2"
+
+					else:
+						# Variables Error
+						json_object["status"] = "3"
+
+				else:
+					# Missing Variables
+					json_object["status"] = "3"
+
+			######### SET ROUND ENABLE STATE #########
+			elif request == "set_round_en":
+
+				# Get the required variables
+				try: data["round_en"]
+				except KeyError: data["round_en"] = None
+
+				try: data["round_id"]
+				except KeyError: data["round_id"] = None
+
+				# Check if variables are provided
+				if data["round_en"] != None and data["round_id"] != None:
+
+					# Check if variables provided are correct
+					if (data["round_en"] == 0 or data["round_en"] == 1) and (data["round_id"] > 0 and data["round_id"] < 100):
+
+						# Update table with new round state value
+						if game_mysql_update("UPDATE tbl_rounds SET round_en = %s WHERE round_id = %s;", (str(data["round_en"]), str(data["round_id"]))):
+							
+							# Everything went well, broadcast the new round list
+							rounds_rows, rounds_data = game_mysql_select("SELECT * FROM tbl_rounds;", None)
+							if rounds_rows >= 1:
+								
+								json_object["status"] = "0"
+								if broadcast_en:
+									broadcast_msg = {"request": "broadcast", "message": "round_en_change", "data": rounds_data}
+									self.game_controller_broadcast(broadcast_msg)
+
+							else:
+								# Couldn't get round list
+								json_object["status"] = "2"
+							
 						else:
 							# Couldn't update client data
 							json_object["status"] = "2"
