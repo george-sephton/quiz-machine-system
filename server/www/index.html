@@ -5,29 +5,33 @@
 		<title>Quiz Controller</title>
 		<script type="text/javascript" src="scripts/jquery-3.5.1.min.js"></script>
 		<script type="text/javascript" src="scripts/jquery-ui.min.js"></script>
-		<script type="text/javascript" src="scripts/game.js"></script>
-		<script type="text/javascript" src="scripts/game_sockets.js"></script>
+		<script type="text/javascript" src="scripts/controller.js"></script>
+		<script type="text/javascript" src="scripts/controller_sockets.js"></script>
 		<link rel="stylesheet" type="text/css" href="controller_style.css" />
 	</head>
 	<body>
 		<div id="game_admin">
 			<div id="game_status"></div>
+			<div id="game_round">Randomised Round: <span id="game_round_placeholder"></span></div>
 			<div id="game_controls">
 				<div class="game_control"><a href="#" id="control_reset_game" class="reset_button"></a></div>
 				<div class="game_control"><a href="#" id="control_game_in_progress"></a></div>
 				<div class="game_control"><a href="#" id="control_game_state" class=""></a></div>
+				<div class="game_control"><a href="#" id="board_shuffle" class="">Reshuffle Board</a></div>
+				<div class="game_control"><a href="#" id="board_randomise" class="">Randomise Board</a></div>
 				<br class="clear_float" />
 			</div>
 		</div>
 		<div id="clientTable" class="gameTable">
 			<div class="gameTableHeading">
 				<div class="gameTableRow">
-					<div class="gameTableHead" style="width: 50px; border-right: 1px solid #333;">ID</div>
-					<div class="gameTableHead" style="width: 230px; border-right: 1px solid #333;">Player</div>
-					<div class="gameTableHead" style="width: 130px; border-right: 1px solid #333;">Enable Buzz</div>
-					<div class="gameTableHead" style="width: 150px; border-right: 1px solid #333;">Battery Status</div>
+					<div class="gameTableHead" style="width: 30px; border-right: 1px solid #333;">ID</div>
+					<div class="gameTableHead" style="width: 180px; border-right: 1px solid #333;">Player</div>
+					<div class="gameTableHead" style="width: 110px; border-right: 1px solid #333;">Enable Buzz</div>
+					<div class="gameTableHead" style="width: 110px; border-right: 1px solid #333;">Battery Status</div>
 					<div class="gameTableHead" style="width: 130px; border-right: 1px solid #333;">Buzz Sound</div>
-					<div class="gameTableHead" style="width: 40px;"></div>
+					<div class="gameTableHead" style="width: 40px; border-right: 1px solid #333;"></div>
+					<div class="gameTableHead" style="width: 130px;">Score</div>
 				</div>
 			</div>
 			<div id="clientTableBody" class="gameTableBody">

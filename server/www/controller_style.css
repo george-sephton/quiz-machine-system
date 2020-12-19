@@ -21,8 +21,17 @@ input:focus {
 #game_admin #game_status {
 	color: #ccc;
 	font-size: 26px;
-	padding: 0px 0px 10px 0px;
+	padding: 0px 0px 7px 0px;
 	margin-bottom: 10px;
+}
+#game_admin #game_round {
+	color: #ccc;
+	font-size: 22px;
+	padding: 0px 0px 8px 0px;
+	margin-bottom: 10px;
+}
+#game_admin #game_round #game_round_placeholder {
+	font-style: italic;
 }
 #game_admin a{
 	background: #dd781f;
@@ -58,7 +67,6 @@ input:focus {
 	margin-right: 16px;
 }
 #clientTable {
-	width: 730px;
 }
 #clientTable #clientTableBody .gameTableCell img{
 	width: 15px;

@@ -387,7 +387,6 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 					print("Buzz in without client ID")
 					json_object["status"] = "2"
 
-
 			######### GET CLIENT LIST #########
 			elif request == "get_client_list":
 				
@@ -420,6 +419,18 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 				if game_admin_rows == 1:
 					json_object["status"] = "0"
 					json_object["result"] = admin_data[0]
+				else:
+					# Couldn't get client list
+					json_object["status"] = "2"
+
+			######### GET GAME ROUNDS #########
+			elif request == "get_rounds":
+				
+				# Check to see if the client has already registered
+				rounds_rows, rounds_data = game_mysql_select("SELECT * FROM tbl_rounds;", None)
+				if rounds_rows >= 1:
+					json_object["status"] = "0"
+					json_object["result"] = rounds_data
 				else:
 					# Couldn't get client list
 					json_object["status"] = "2"
@@ -553,8 +564,50 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 					# Missing Variables
 					json_object["status"] = "3"
 
+			######### SHUFFLE BOARD #########
+			elif request == "broadcast_board_shuffle":
+				
+				try: data["order"]
+				except KeyError: data["order"] = None
+
+				if data["order"] != None:
+
+					if broadcast_en:
+						broadcast_msg = {"request": "broadcast", "message": "board_shuffle", "data": data["order"]}
+						self.game_controller_broadcast(broadcast_msg)
+						json_object["status"] = "0"
+
+				else:
+					# Missing Variables
+					json_object["status"] = "3"
+
+			######### BROADCAST RANDOMISE BOARD #########
+			elif request == "broadcast_board_randomise":
+				if broadcast_en:
+					broadcast_msg = {"request": "broadcast", "message": "board_randomise"}
+					self.game_controller_broadcast(broadcast_msg)
+				json_object["status"] = "0"
+
+			######### BROADCAST RANDOMISE RESULT #########
+			elif request == "broadcast_board_randomise_result":
+
+				try: data["round"]
+				except KeyError: data["round"] = None
+
+				if data["round"] != None:
+
+					if broadcast_en:
+						broadcast_msg = {"request": "broadcast", "message": "randomised_round_result", "data": data["round"]}
+						self.game_controller_broadcast(broadcast_msg)
+					json_object["status"] = "0"
+
+				else:
+					# Missing Variables
+					json_object["status"] = "3"
 
 
+
+				
 			######### RESET GAME #########
 			elif request == "reset_game":
 
