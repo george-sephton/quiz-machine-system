@@ -106,6 +106,14 @@ input:focus {
 	padding: 4px;
 	display: table-cell;
 }
+.gameTable .gameTableCell .score_change_link {
+	text-decoration: none;
+	color: #ccc;
+	border: 1px solid #333;
+	padding: 1px 4px 1px 4px;
+	border-radius: 4px;
+	background-color: #333;
+}
 .clear_float {
 	clear: both;
 }
