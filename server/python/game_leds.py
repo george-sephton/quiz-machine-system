@@ -113,14 +113,14 @@ def set_leds():
 	set_button_colour(3, *colors[leds_state[5]])
 	set_button_colour(2, *colors[leds_state[6]])
 
-def set_button_colour (button, r, g, b):
+def set_button_colour(button, r, g, b):
 
 	for i in range(4):
 		lights.set_pixel(i + (4 * button), r, g, b);
 	
 	lights.show()
 
-def flash_leds (colour_l):
+def flash_leds(colour_l):
 
 	# Get colour to flash
 	flash_colour = return_colour_index(colour_l)
@@ -136,3 +136,43 @@ def flash_leds (colour_l):
 
 	# Revert the LEDs back to the correct value
 	load_led_colours()
+
+def leds_test():
+	set_leds();
+
+	for i in range(1, 15):
+		if (i) >= 1 and (i) <= 7:
+			set_button_colour(0, *colors[i])
+		else: 
+			set_button_colour(0, *colors[0])
+
+		if (i-1) >= 1 and (i-1) <= 7:
+			set_button_colour(1, *colors[i-1])
+		else: 
+			set_button_colour(1, *colors[0])
+			
+		if (i-2) >= 1 and (i-2) <= 7:
+			set_button_colour(2, *colors[i-2])
+		else: 
+			set_button_colour(2, *colors[0])
+			
+		if (i-3) >= 1 and (i-3) <= 7:
+			set_button_colour(3, *colors[i-3])
+		else: 
+			set_button_colour(3, *colors[0])
+			
+		if (i-4) >= 1 and (i-4) <= 7:
+			set_button_colour(4, *colors[i-4])
+		else: 
+			set_button_colour(4, *colors[0])
+			
+		if (i-5) >= 1 and (i-5) <= 7:
+			set_button_colour(5, *colors[i-5])
+		else: 
+			set_button_colour(5, *colors[0])
+			
+		if (i-6) >= 1 and (i-6) <= 7:
+			set_button_colour(6, *colors[i-6])
+		else: 
+			set_button_colour(6, *colors[0])
+

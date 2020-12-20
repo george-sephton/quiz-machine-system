@@ -564,6 +564,49 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 					# Missing Variables
 					json_object["status"] = "3"
 
+			######### CHANGE PLAYER SCORE #########
+			elif request == "score_update":
+				# Get the required variable
+				try: data["score_change"]
+				except KeyError: data["score_change"] = None
+
+				try: data["client_id"]
+				except KeyError: data["client_id"] = None
+
+				# Check if variables are provided
+				if data["score_change"] != None and data["client_id"] != None:
+
+					# Check if variables provided are correct
+					if data["client_id"] > 0 and data["client_id"] < 10:
+
+						# Get the current score
+						no_players, player_list = game_mysql_select("SELECT player_score FROM tbl_players WHERE client_id = %s;", (str(data["client_id"]),))
+						if no_players == 1:
+							new_score = int(player_list[0]["player_score"]) + int(data["score_change"])
+							
+							# Update table with new player score
+							if game_mysql_update("UPDATE tbl_players SET player_score = %s WHERE client_id = %s;", (new_score, str(data["client_id"]))):
+								# Everything went well, broadcast that the client list has changed
+								if broadcast_en:
+									broadcast_msg = {"request": "broadcast", "message": "player_score_change", "data": {"client_id": data["client_id"], "player_score": new_score}}
+									self.game_controller_broadcast(broadcast_msg)
+								json_object["status"] = "0"
+							else:
+								# Couldn't update client data
+								json_object["status"] = "2"
+
+						else:
+							# Couldn't get current score
+							json_object["status"] = "2"
+
+					else:
+						# Variables Error
+						json_object["status"] = "3"
+
+				else:
+					# Missing Variables
+					json_object["status"] = "3"
+
 			######### SHUFFLE BOARD #########
 			elif request == "broadcast_board_shuffle":
 				
@@ -622,8 +665,6 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 					# Missing Variables
 					json_object["status"] = "3"
 
-
-				
 			######### RESET GAME #########
 			elif request == "reset_game":
 
