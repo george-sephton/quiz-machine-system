@@ -16,7 +16,7 @@ app = tornado.web.Application([
 if __name__ == '__main__':
 	
 	# LEDs Test
-	# leds_test()	
+	leds_test()	
 	# Set the initial LEDs
 	load_led_colours()
 
