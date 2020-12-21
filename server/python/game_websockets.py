@@ -100,7 +100,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 						if client_rows == 1:
 							
 							# Play the correct audio file
-							client_sound = "quiz_buzzes/" + str(client_data[0]["client_sound"]) + ".wav"
+							client_sound = "/home/pi/quiz-machine-system/server/python/quiz_buzzes/" + str(client_data[0]["client_sound"]) + ".wav"
 							pygame.mixer.music.load(client_sound)
 							pygame.mixer.music.play()
 							
