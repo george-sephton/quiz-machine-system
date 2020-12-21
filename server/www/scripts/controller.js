@@ -86,15 +86,17 @@ function updateClientList(result) {
 
 		/* Get buzz enabled status */
 		var checked = "";
+		var disabled = "";
+		console.log(client['client_buzz_allowed']);
 		if(client['client_buzz_allowed'] == 1) {
 			checked = "checked=\"checked\"";
 		}
 		if(game_in_progress != 1) {
 			if(client['client_colour'] == null) {
-				checked = "disabled=\"disabled\"";
+				disabled = "disabled=\"disabled\"";
 			}
 		} else {
-			checked = "disabled=\"disabled\"";
+			disabled = "disabled=\"disabled\"";
 		}
 		/* Get battery status */
 		var battery_status;
@@ -131,7 +133,13 @@ function updateClientList(result) {
 		$('<div/>', {
 			"class": 'gameTableCell',
 			"style": 'width: 110px; border-right: 1px solid #333;',
-			html: "<input type=\"checkbox\" id=\"enable_buzz_"+client['client_id']+"\" class=\"enable_buzz\" "+checked+" />"
+			html: function () {
+				if(client['client_id'] != '1') {
+					return "<input type=\"checkbox\" id=\"enable_buzz_"+client['client_id']+"\" class=\"enable_buzz\" "+checked+" "+disabled+" />";
+				} else {
+					return "";
+				}
+			}
 		}).appendTo('#client_row_id_'+client['client_id']);
 		/* Battery status */
 		$('<div/>', {
