@@ -631,7 +631,14 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 					self.game_controller_broadcast(broadcast_msg)
 				json_object["status"] = "0"
 
-			######### BROADCAST RANDOMISE RESULT #########
+			######### BROADCAST RANDOMISE PLAYER #########
+			elif request == "broadcast_player_randomise":
+				if broadcast_en:
+					broadcast_msg = {"request": "broadcast", "message": "player_randomise"}
+					self.game_controller_broadcast(broadcast_msg)
+				json_object["status"] = "0"
+
+			######### BROADCAST RANDOMISE BOARD RESULT #########
 			elif request == "broadcast_board_randomise_result":
 
 				try: data["round"]
@@ -641,6 +648,23 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
 					if broadcast_en:
 						broadcast_msg = {"request": "broadcast", "message": "randomised_round_result", "data": data["round"]}
+						self.game_controller_broadcast(broadcast_msg)
+					json_object["status"] = "0"
+
+				else:
+					# Missing Variables
+					json_object["status"] = "3"
+
+			######### BROADCAST RANDOMISE PLAYER RESULT #########
+			elif request == "broadcast_player_randomise_result":
+
+				try: data["client_id"]
+				except KeyError: data["client_id"] = None
+
+				if data["client_id"] != None:
+
+					if broadcast_en:
+						broadcast_msg = {"request": "broadcast", "message": "randomised_player_result", "data": data["client_id"]}
 						self.game_controller_broadcast(broadcast_msg)
 					json_object["status"] = "0"
 

@@ -113,7 +113,7 @@ function updateClientList(result) {
 		$('<div/>', {
 			id: 'client_row_id_'+client['client_id'],
 			"client_id": client['client_id'],
-			"class": 'gameTableRow',
+			"class": 'gameTableRow clientRow',
 		}).appendTo('#clientTableBody');
 
 		/* Add the cells, first the client ID */
@@ -403,9 +403,7 @@ function game_parse_broadcast(received_JSON) {
 				/* Update buzz disabled status */
 				update_buzz_status(game_in_progress);
 				/* Reset the row colours to remove any highlighted winners */
-				$("#clientTableBody").find(".gameTableRow").each(function(index){
-					$(this).css("background-color", "");
-				});
+				$(".clientRow").css("background-color", "");
 			}
 			break;
 		case "round_en_change":
@@ -430,6 +428,7 @@ function game_parse_broadcast(received_JSON) {
 			send_socket_request("get_admin_data");
 			/* Clear the rounds table */
 			$(".roundRow").css("background-color", "");
+			$(".clientRow").css("background-color", "");
 			break;
 		case "buzz_in":
 			/* Someone's buzzed in */
@@ -440,6 +439,10 @@ function game_parse_broadcast(received_JSON) {
 		case "randomised_round_result":
 			/* Show what the randomised round is */
 			$("#game_round_placeholder").html(received_JSON["data"]);
+			break;
+		case "randomised_player_result":
+			/* Show who the randomised player is */
+			$('#client_row_id_'+received_JSON["data"]).css("background-color", "#d8e04a");
 			break;
 		case "gamble_id":
 			/* Clear the round that was replaced by a Gamble option */
@@ -528,5 +531,11 @@ $(document).ready(function() {
 	$("#board_randomise").click(function() {
 		$("#game_round_placeholder").html("");
 		send_socket_request("broadcast_board_randomise", "");
+	});
+
+	/* Randomise board button click event */
+	$("#player_randomise").click(function() {
+		$(".clientRow").css("background-color", "");
+		send_socket_request("broadcast_player_randomise", "");
 	});
 });

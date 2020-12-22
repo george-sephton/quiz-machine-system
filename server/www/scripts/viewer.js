@@ -1,6 +1,9 @@
 var game_rounds = [];
 var gamble_number = false;
 
+var players_total = 0;
+var player_array = [];
+
 var game_websockets = new WebSocket('ws://192.168.1.170:8080');
 
 game_websockets.onopen = function(e) {
@@ -17,10 +20,13 @@ game_websockets.onmessage = function(event) {
 	// Parse received data based on original request
 	switch(received_JSON["request"]) {
 		case "broadcast":
-			$(".player").css("background-color", "");
 			switch(received_JSON["message"]) {
+				case "game_admin_change":
+					$(".player").css("background-color", "");
+					break;
 				case "reset":
 					/* Game as just been reset, let's reload client table */
+					$(".player").css("background-color", "");
 					send_socket_request("get_client_list");
 					/* Clear the board */
 					for(i=1; i<10; i++) {
@@ -30,11 +36,13 @@ game_websockets.onmessage = function(event) {
 					$(".squares_cell").css("background-color", "");
 					break;
 				case "client_list_change":
+					$(".player").css("background-color", "");
 					/* Client list has changed */
 					send_socket_request("get_client_list");
 					break;
 				case "board_shuffle":
 					/* Shuffle the board around */
+					$(".player").css("background-color", "");
 					$(".squares_cell").css("background-color", "");
 					game_rounds = [];
 					game_rounds_i = 0;
@@ -64,6 +72,7 @@ game_websockets.onmessage = function(event) {
 					}
 					break;
 				case "board_randomise":
+					$(".player").css("background-color", "");
 					var probability = 7;
 					(function squares_loop(prev=11) {
 						setTimeout(function() {
@@ -96,16 +105,41 @@ game_websockets.onmessage = function(event) {
 						}, 250)
 					})();
 					break;
+				case "player_randomise":
+					(function squares_loop(prev=11) {
+						setTimeout(function() {
+							do {
+								var number = 0 + Math.floor(Math.random() * players_total);
+							} while(number == prev)
+
+
+							$(".player").css("background-color", "");
+							$("#player_row_"+player_array[number]).css("background-color", "#dd1f1f");
+
+							var random = [(1 + Math.floor(Math.random() * 10)), (1 + Math.floor(Math.random() * 10))]
+							if( random[0] != random[1] ) {
+								/* We haven't landed on the correct random number yet */
+								squares_loop(number);
+							} else {
+								/* Finished, let's broadcast the player ID back */
+								send_socket_request("broadcast_player_randomise_result", {"client_id": player_array[number]});
+							}
+						}, 250)
+					})();
+					break;
 				case "player_name_change":
+					$(".player").css("background-color", "");
 					if(received_JSON["data"]['player_name'] != "") {
 						$('#player_name_'+received_JSON["data"]['client_id']).html(received_JSON["data"]['player_name']);
 					}
 					break;
 				case "player_score_change":
 					/* Player's score has changed */
+					$(".player").css("background-color", "");
 					$("#player_score_"+received_JSON["data"]["client_id"]).html(received_JSON["data"]["player_score"]);
 					break;
 				case "buzz_in":
+					$(".player").css("background-color", "");
 					(function winner_flash_loop(i) {
 						setTimeout(function() {
 							if(i%2) {
@@ -122,6 +156,7 @@ game_websockets.onmessage = function(event) {
 			}
 			break;
 		case "get_client_list":
+			$(".player").css("background-color", "");
 			if(received_JSON["status"] == "0") {
 				draw_score_board(received_JSON["result"]);
 			} else {
@@ -155,10 +190,14 @@ function send_socket_request(request, data) {
 function draw_score_board(players) {
 	/* Clear current client table */ 
 	$("#scores").html("");
+	players_total = 0;
+	player_array = [];
 
 	$(players).each(function(i) {
 		player = players[i];
 		if(player["client_id"] != 1) {
+			player_array[players_total] = player["client_id"];
+			players_total++;
 
 			$('<div/>', {
 				id: 'player_row_'+player['client_id'],
